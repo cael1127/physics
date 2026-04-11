@@ -164,6 +164,14 @@ static void fp2_world_build_contacts(Fp2World* w) {
   }
 }
 
+void fp2_world_apply_body_force(Fp2World* w, int body_index, FpVec2 force, float torque_z, float dt) {
+  if (!w || body_index < 0 || body_index >= w->body_count) return;
+  Fp2Body* b = &w->bodies[body_index];
+  if (b->is_static) return;
+  b->v = fp_v2_mad(b->v, dt * b->inv_mass, force);
+  b->w += dt * torque_z * b->inv_inertia;
+}
+
 void fp2_world_step(Fp2World* w, float dt, int vel_iters, int pos_iters) {
   fp2_world_build_contacts(w);
 

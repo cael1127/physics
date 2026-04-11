@@ -35,3 +35,10 @@ void fp_win32_clear(FpWin32Window* w, uint32_t rgb);
 void fp_win32_line(FpWin32Window* w, int x0, int y0, int x1, int y1, uint32_t rgb);
 void fp_win32_rect(FpWin32Window* w, int x0, int y0, int x1, int y1, uint32_t rgb);
 
+void fp_win32_fill_triangle(FpWin32Window* w, int x0, int y0, int x1, int y1, int x2, int y2, uint32_t rgb);
+void fp_win32_fill_quad(
+    FpWin32Window* w, int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, uint32_t rgb);
+
+// ASCII / UTF-8 subset (7-bit) HUD text.
+void fp_win32_text_utf8(FpWin32Window* w, int x, int y, const char* utf8, uint32_t rgb);
+

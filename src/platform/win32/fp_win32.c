@@ -6,6 +6,7 @@
 
 #include <string.h>
 
+
 struct FpWin32Window {
   HWND hwnd;
   HDC back_dc;
@@ -227,5 +228,64 @@ void fp_win32_rect(FpWin32Window* w, int x0, int y0, int x1, int y1, uint32_t rg
   SelectObject(w->back_dc, old_brush);
   SelectObject(w->back_dc, old_pen);
   DeleteObject(pen);
+}
+
+static COLORREF fp_rgb_to_colorref(uint32_t rgb) {
+  uint32_t r = (rgb >> 16) & 0xFFu;
+  uint32_t g = (rgb >> 8) & 0xFFu;
+  uint32_t b = (rgb >> 0) & 0xFFu;
+  return RGB((BYTE)r, (BYTE)g, (BYTE)b);
+}
+
+void fp_win32_fill_triangle(FpWin32Window* w, int x0, int y0, int x1, int y1, int x2, int y2, uint32_t rgb) {
+  if (!w) return;
+  POINT pt[3];
+  pt[0].x = x0;
+  pt[0].y = y0;
+  pt[1].x = x1;
+  pt[1].y = y1;
+  pt[2].x = x2;
+  pt[2].y = y2;
+  HBRUSH br = CreateSolidBrush(fp_rgb_to_colorref(rgb));
+  HGDIOBJ old_br = SelectObject(w->back_dc, br);
+  HPEN pen = CreatePen(PS_SOLID, 1, fp_rgb_to_colorref(rgb));
+  HGDIOBJ old_pen = SelectObject(w->back_dc, pen);
+  Polygon(w->back_dc, pt, 3);
+  SelectObject(w->back_dc, old_pen);
+  DeleteObject(pen);
+  SelectObject(w->back_dc, old_br);
+  DeleteObject(br);
+}
+
+void fp_win32_fill_quad(
+    FpWin32Window* w, int x0, int y0, int x1, int y1, int x2, int y2, int x3, int y3, uint32_t rgb) {
+  if (!w) return;
+  POINT pt[4];
+  pt[0].x = x0;
+  pt[0].y = y0;
+  pt[1].x = x1;
+  pt[1].y = y1;
+  pt[2].x = x2;
+  pt[2].y = y2;
+  pt[3].x = x3;
+  pt[3].y = y3;
+  HBRUSH br = CreateSolidBrush(fp_rgb_to_colorref(rgb));
+  HGDIOBJ old_br = SelectObject(w->back_dc, br);
+  HPEN pen = CreatePen(PS_SOLID, 1, fp_rgb_to_colorref(rgb));
+  HGDIOBJ old_pen = SelectObject(w->back_dc, pen);
+  Polygon(w->back_dc, pt, 4);
+  SelectObject(w->back_dc, old_pen);
+  DeleteObject(pen);
+  SelectObject(w->back_dc, old_br);
+  DeleteObject(br);
+}
+
+void fp_win32_text_utf8(FpWin32Window* w, int x, int y, const char* utf8, uint32_t rgb) {
+  if (!w || !utf8) return;
+  SetBkMode(w->back_dc, TRANSPARENT);
+  SetTextColor(w->back_dc, fp_rgb_to_colorref(rgb));
+  HGDIOBJ oldf = SelectObject(w->back_dc, GetStockObject(ANSI_FIXED_FONT));
+  TextOutA(w->back_dc, x, y, utf8, (int)strlen(utf8));
+  SelectObject(w->back_dc, oldf);
 }
 

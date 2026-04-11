@@ -58,7 +58,53 @@ else()
   target_compile_definitions(fullphysics_simd PUBLIC FP_SIMD=0)
 endif()
 
-add_executable(fullphysics_app
+add_library(fullphysics_fluid2d STATIC
+  src/fluid2d/fp_fluid2d.h
+  src/fluid2d/fp_fluid2d.c
+)
+target_include_directories(fullphysics_fluid2d PUBLIC src)
+target_link_libraries(fullphysics_fluid2d PUBLIC fullphysics_core fullphysics_rigid2d)
+
+add_library(fullphysics_particles2d STATIC
+  src/particles2d/fp_particles2d.h
+  src/particles2d/fp_particles2d.c
+)
+target_include_directories(fullphysics_particles2d PUBLIC src)
+target_link_libraries(fullphysics_particles2d PUBLIC fullphysics_core fullphysics_rigid2d)
+
+add_library(fullphysics_aero2d STATIC
+  src/aero2d/fp_aero2d.h
+  src/aero2d/fp_aero2d.c
+)
+target_include_directories(fullphysics_aero2d PUBLIC src)
+target_link_libraries(fullphysics_aero2d PUBLIC fullphysics_core fullphysics_rigid2d)
+
+add_library(fullphysics_draw STATIC
+  src/draw/fp_camera2.h
+  src/draw/fp_camera2.c
+  src/draw/fp_draw2d.h
+  src/draw/fp_draw2d.c
+  src/draw/fp_draw_win32.c
+)
+target_include_directories(fullphysics_draw PUBLIC src)
+target_link_libraries(fullphysics_draw PUBLIC fullphysics_core fullphysics_platform_win32)
+
+add_library(fullphysics_runtime STATIC
+  src/runtime/fp_scene.h
+  src/runtime/fp_scene.c
+  src/runtime/fp_scene_data.h
+  src/runtime/fp_scene_data.c
+)
+target_include_directories(fullphysics_runtime PUBLIC src)
+target_link_libraries(fullphysics_runtime PUBLIC
+  fullphysics_core
+  fullphysics_rigid2d
+  fullphysics_fluid2d
+  fullphysics_particles2d
+  fullphysics_aero2d
+)
+
+add_executable(fullphysics_app WIN32
   src/app/main.c
   src/app/demo_scenes.h
   src/app/demo_scenes.c
@@ -66,11 +112,14 @@ add_executable(fullphysics_app
   src/app/debug_draw.c
 )
 target_include_directories(fullphysics_app PRIVATE src)
+target_compile_definitions(fullphysics_app PRIVATE _CRT_SECURE_NO_WARNINGS)
 target_link_libraries(fullphysics_app PRIVATE
   fullphysics_core
   fullphysics_rigid2d
   fullphysics_platform_win32
   fullphysics_simd
+  fullphysics_runtime
+  fullphysics_draw
 )
 
 if(MSVC)
@@ -78,12 +127,22 @@ if(MSVC)
   target_compile_options(fullphysics_rigid2d PRIVATE /W4)
   target_compile_options(fullphysics_platform_win32 PRIVATE /W4)
   target_compile_options(fullphysics_simd PRIVATE /W4)
+  target_compile_options(fullphysics_fluid2d PRIVATE /W4)
+  target_compile_options(fullphysics_particles2d PRIVATE /W4)
+  target_compile_options(fullphysics_aero2d PRIVATE /W4)
+  target_compile_options(fullphysics_draw PRIVATE /W4)
+  target_compile_options(fullphysics_runtime PRIVATE /W4)
   target_compile_options(fullphysics_app PRIVATE /W4)
 else()
   target_compile_options(fullphysics_core PRIVATE -Wall -Wextra -Wpedantic)
   target_compile_options(fullphysics_rigid2d PRIVATE -Wall -Wextra -Wpedantic)
   target_compile_options(fullphysics_platform_win32 PRIVATE -Wall -Wextra -Wpedantic)
   target_compile_options(fullphysics_simd PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(fullphysics_fluid2d PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(fullphysics_particles2d PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(fullphysics_aero2d PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(fullphysics_draw PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(fullphysics_runtime PRIVATE -Wall -Wextra -Wpedantic)
   target_compile_options(fullphysics_app PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
@@ -93,8 +152,19 @@ add_executable(fullphysics_tests
   tests/test_collision.c
   tests/test_determinism.c
   tests/test_simd.c
+  tests/test_fluid.c
+  tests/test_aero.c
+  tests/test_scene.c
 )
 target_include_directories(fullphysics_tests PRIVATE src)
-target_link_libraries(fullphysics_tests PRIVATE fullphysics_core fullphysics_rigid2d fullphysics_simd)
+target_compile_definitions(fullphysics_tests PRIVATE _CRT_SECURE_NO_WARNINGS)
+target_link_libraries(fullphysics_tests PRIVATE
+  fullphysics_core
+  fullphysics_rigid2d
+  fullphysics_simd
+  fullphysics_fluid2d
+  fullphysics_particles2d
+  fullphysics_aero2d
+  fullphysics_runtime
+)
 add_test(NAME fullphysics_tests COMMAND fullphysics_tests)
-

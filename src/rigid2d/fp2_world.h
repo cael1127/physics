@@ -33,3 +33,6 @@ int fp2_world_add_body(Fp2World* w, int is_static, FpVec2 p, float angle, Fp2Sha
 
 void fp2_world_step(Fp2World* w, float dt, int vel_iters, int pos_iters);
 
+// World-space force at center of mass; torque about +z (screen out). Skips static bodies.
+void fp2_world_apply_body_force(Fp2World* w, int body_index, FpVec2 force, float torque_z, float dt);
+
