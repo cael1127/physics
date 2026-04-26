@@ -1,0 +1,26 @@
+{
+  "$schema": "./schema.json",
+  "name": "smoke",
+  "runs": 1,
+  "command": {
+    "windows": [
+      "ctest",
+      "--test-dir",
+      "build",
+      "-C",
+      "Release",
+      "-R",
+      "fullphysics_determinism",
+      "--output-on-failure"
+    ],
+    "default": [
+      "ctest",
+      "--test-dir",
+      "build",
+      "-R",
+      "fullphysics_determinism",
+      "--output-on-failure"
+    ]
+  },
+  "notes": "CI smoke benchmark for deterministic gate timing and artifact generation."
+}

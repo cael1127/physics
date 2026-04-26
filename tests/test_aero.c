@@ -10,7 +10,9 @@ int test_aero(void) {
   Fp2WorldDesc wd;
   wd.max_bodies = 32;
   wd.max_contacts = 64;
+  wd.max_joints = 16;
   wd.gravity = fp_v2(0.0f, 0.0f);
+  wd.broadphase_mode = FP2_BROADPHASE_SWEEP_AND_PRUNE;
   fp2_world_init(&w, &wd);
 
   fp2_world_add_body(&w, 0, fp_v2(0.0f, 0.0f), 0.0f, fp2_shape_circle(0.5f), 1.0f, 0.2f, 0.0f);

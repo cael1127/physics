@@ -51,6 +51,21 @@ Use **`FullPhysicsLauncher.exe`** in the repo root.
 
 Umbrella include: `src/fullphysics.h`.
 
+## Reproducibility
+
+Deterministic build flags are enabled by default with `-DFP_DETERMINISTIC=ON`.
+
+- Determinism and runtime requirements: `docs/reproducibility/determinism_contract.md`
+- Disable strict deterministic flags only for local exploration:
+  - `cmake -S . -B build -A x64 -DFP_DETERMINISTIC=OFF`
+
+## Documentation Tracks
+
+- Learn path: `docs/learn/`
+- Use path: `docs/use/`
+- Contribute path: `docs/contribute/`
+- Classroom labs: `docs/classroom/`
+
 ## Minimal integration
 
 ```c

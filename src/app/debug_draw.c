@@ -164,9 +164,12 @@ void dbg2d_draw_scene(
     for (int i = 0; i < world->contact_count; i++) {
       const Fp2Contact* c = &world->contacts[i];
       if (!c->m.hit) continue;
-      FpVec2 p = c->m.cp.p;
       FpVec2 n = c->m.normal;
-      dbg_line_world(d, width, height, p, fp_v2_mad(p, 0.25f, n), 0xffc857);
+      int cp_count = c->m.cp_count > 2 ? 2 : c->m.cp_count;
+      for (int cp = 0; cp < cp_count; cp++) {
+        FpVec2 p = c->m.cps[cp].p;
+        dbg_line_world(d, width, height, p, fp_v2_mad(p, 0.25f, n), 0xffc857);
+      }
     }
   }
 

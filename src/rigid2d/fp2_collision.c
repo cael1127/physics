@@ -13,7 +13,11 @@ static Fp2Manifold fp2_miss(void) {
   m.hit = 0;
   m.normal = fp_v2(0, 1);
   m.penetration = 0.0f;
-  m.cp.p = fp_v2(0, 0);
+  m.cp_count = 0;
+  m.cps[0].p = fp_v2(0, 0);
+  m.cps[0].separation = 0.0f;
+  m.cps[1].p = fp_v2(0, 0);
+  m.cps[1].separation = 0.0f;
   return m;
 }
 
@@ -31,7 +35,11 @@ static Fp2Manifold fp2_circle_circle(float ra, FpVec2 pa, float rb, FpVec2 pb) {
     m.normal = fp_v2(1.0f, 0.0f);
   }
   m.penetration = r - dist;
-  m.cp.p = fp_v2_add(pa, fp_v2_mul(m.normal, ra));
+  m.cp_count = 1;
+  m.cps[0].p = fp_v2_add(pa, fp_v2_mul(m.normal, ra));
+  m.cps[0].separation = -m.penetration;
+  m.cps[1].p = m.cps[0].p;
+  m.cps[1].separation = m.cps[0].separation;
   return m;
 }
 
@@ -79,10 +87,16 @@ static Fp2Manifold fp2_box_box(Fp2Box a, FpTransform2 xa, Fp2Box b, FpTransform2
   m.hit = 1;
   m.normal = best_axis;
   m.penetration = best_pen;
-  // Approx contact point: midpoint of overlap along normal
-  m.cp.p = fp_v2_add(xa.p, fp_v2_mul(m.normal, (a.half_extents.x + a.half_extents.y) * 0.0f));
-  // Better approximation: closest point on B to A along -normal
-  m.cp.p = fp_v2_sub(xb.p, fp_v2_mul(m.normal, b.half_extents.x));
+  m.cp_count = 2;
+  // Approximate 2-point patch along tangent for better stack stability than a single point.
+  FpVec2 t = fp_v2_norm(fp_v2_perp(m.normal));
+  float extent = fminf(a.half_extents.x + a.half_extents.y, b.half_extents.x + b.half_extents.y) * 0.35f;
+  FpVec2 base = fp_v2_mul(fp_v2_add(xa.p, xb.p), 0.5f);
+  base = fp_v2_sub(base, fp_v2_mul(m.normal, 0.5f * m.penetration));
+  m.cps[0].p = fp_v2_add(base, fp_v2_mul(t, extent));
+  m.cps[1].p = fp_v2_sub(base, fp_v2_mul(t, extent));
+  m.cps[0].separation = -m.penetration;
+  m.cps[1].separation = -m.penetration;
   return m;
 }
 
@@ -115,7 +129,11 @@ static Fp2Manifold fp2_circle_box(float r, FpVec2 pc, Fp2Box box, FpTransform2 x
     // A=box, B=circle: normal points from box to circle => n_world
     m.normal = n_world;
   }
-  m.cp.p = p_world;
+  m.cp_count = 1;
+  m.cps[0].p = p_world;
+  m.cps[0].separation = -m.penetration;
+  m.cps[1].p = p_world;
+  m.cps[1].separation = -m.penetration;
   return m;
 }
 

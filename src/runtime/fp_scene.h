@@ -50,3 +50,5 @@ void fp_scene_load_demo(FpScene* s, int demo_id);
 void fp_scene_step(FpScene* s, float dt, int vel_iters, int pos_iters);
 
 void fp_scene_add_dye_at_world(FpScene* s, FpVec2 world_pos, float amount);
+int fp_scene_save_snapshot(const FpScene* s, const char* path);
+int fp_scene_load_snapshot(FpScene* s, const char* path);

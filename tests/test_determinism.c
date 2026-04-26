@@ -27,7 +27,9 @@ int test_determinism(void) {
   Fp2WorldDesc wd;
   wd.max_bodies = 512;
   wd.max_contacts = 2048;
+  wd.max_joints = 256;
   wd.gravity = fp_v2(0.0f, -9.81f);
+  wd.broadphase_mode = FP2_BROADPHASE_SWEEP_AND_PRUNE;
 
   Fp2World a, b;
   fp2_world_init(&a, &wd);

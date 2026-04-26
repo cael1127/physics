@@ -21,7 +21,9 @@ void fp_scene_desc_default(FpSceneDesc* d) {
   memset(d, 0, sizeof(*d));
   d->world.max_bodies = 2048;
   d->world.max_contacts = 4096;
+  d->world.max_joints = 2048;
   d->world.gravity = fp_v2(0.0f, -9.81f);
+  d->world.broadphase_mode = FP2_BROADPHASE_SWEEP_AND_PRUNE;
 
   d->enable_fluid = 1;
   d->fluid.nx = 72;
@@ -85,6 +87,20 @@ void fp_scene_load_demo(FpScene* s, int demo_id) {
 void fp_scene_add_dye_at_world(FpScene* s, FpVec2 world_pos, float amount) {
   if (!s || !s->fluid_inited) return;
   fp_fluid2d_add_dye_gaussian(&s->fluid, world_pos, 0.35f, amount);
+}
+
+int fp_scene_save_snapshot(const FpScene* s, const char* path) {
+  if (!s) return 0;
+  return fp2_world_save_snapshot(&s->world, path);
+}
+
+int fp_scene_load_snapshot(FpScene* s, const char* path) {
+  if (!s) return 0;
+  int ok = fp2_world_load_snapshot(&s->world, path);
+  if (!ok) return 0;
+  if (s->fluid_inited) fp_fluid2d_reset(&s->fluid);
+  if (s->particles_inited) fp_particles2d_clear(&s->particles);
+  return 1;
 }
 
 void fp_scene_step(FpScene* s, float dt, int vel_iters, int pos_iters) {

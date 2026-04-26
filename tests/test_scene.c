@@ -9,7 +9,9 @@ int test_scene(void) {
   Fp2WorldDesc wd;
   wd.max_bodies = 64;
   wd.max_contacts = 128;
+  wd.max_joints = 32;
   wd.gravity = fp_v2(0.0f, -9.81f);
+  wd.broadphase_mode = FP2_BROADPHASE_SWEEP_AND_PRUNE;
   fp2_world_init(&w, &wd);
 
   fp2_world_reset(&w);

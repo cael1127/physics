@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            fp_simd: ON
+            cmake_configure: cmake -S . -B build -A x64 -DFP_DETERMINISTIC=ON -DFP_SIMD=ON
+            cmake_build: cmake --build build --config Release
+            ctest_cmd: ctest --test-dir build -C Release --output-on-failure
+            ctest_det_cmd: ctest --test-dir build -C Release -R fullphysics_determinism --output-on-failure
+            headless_exe: build/Release/fullphysics_headless.exe
+          - os: windows-latest
+            fp_simd: OFF
+            cmake_configure: cmake -S . -B build -A x64 -DFP_DETERMINISTIC=ON -DFP_SIMD=OFF
+            cmake_build: cmake --build build --config Release
+            ctest_cmd: ctest --test-dir build -C Release --output-on-failure
+            ctest_det_cmd: ctest --test-dir build -C Release -R fullphysics_determinism --output-on-failure
+            headless_exe: build/Release/fullphysics_headless.exe
+          - os: ubuntu-latest
+            fp_simd: ON
+            cmake_configure: cmake -S . -B build -DFP_DETERMINISTIC=ON -DFP_SIMD=ON
+            cmake_build: cmake --build build --config Release
+            ctest_cmd: ctest --test-dir build --output-on-failure
+            ctest_det_cmd: ctest --test-dir build -R fullphysics_determinism --output-on-failure
+            headless_exe: build/fullphysics_headless
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Configure
+        run: ${{ matrix.cmake_configure }}
+
+      - name: Build
+        run: ${{ matrix.cmake_build }}
+
+      - name: Run test suite
+        run: ${{ matrix.ctest_cmd }}
+
+      - name: Run determinism gate
+        run: ${{ matrix.ctest_det_cmd }}
+
+      - name: Smoke benchmark
+        shell: bash
+        run: |
+          if [ -f "bench/run_benchmark.py" ] && [ -f "profiles/smoke.json" ]; then
+            python bench/run_benchmark.py --profile profiles/smoke.json --out artifacts/ci-smoke
+            python bench/render_report.py --artifacts-root artifacts/ci-smoke --out-md artifacts/ci-smoke/report.md
+          else
+            echo "Smoke benchmark skipped (missing bench/run_benchmark.py or profiles/smoke.json)"
+          fi
+
+      - name: Headless self-consistency
+        shell: bash
+        run: |
+          set -e
+          if [ -f "bench/compare_runs.py" ] && [ -f "${{ matrix.headless_exe }}" ]; then
+            mkdir -p artifacts/headless-self
+            H="${{ matrix.headless_exe }}"
+            "$H" --demo 1 --steps 120 --dt 0.016666667 --wind-x 0.25 --gravity-scale 1.0 --csv artifacts/headless-self/run1.csv
+            "$H" --demo 1 --steps 120 --dt 0.016666667 --wind-x 0.25 --gravity-scale 1.0 --csv artifacts/headless-self/run2.csv
+            TH='{"kinetic_energy":{"mae":0.0,"rmse":0.0,"max_abs":0.0},"com_y":{"mae":0.0,"rmse":0.0,"max_abs":0.0},"contact_count":{"mae":0.0,"rmse":0.0,"max_abs":0.0}}'
+            python bench/compare_runs.py --a artifacts/headless-self/run1.csv --b artifacts/headless-self/run2.csv --columns kinetic_energy,com_y,contact_count --thresholds-json "$TH" --out-json artifacts/headless-self/compare.json
+          else
+            echo "Headless self-consistency skipped (missing headless binary or compare_runs.py)"
+          fi

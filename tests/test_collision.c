@@ -22,6 +22,7 @@ int test_collision(void) {
     Fp2Manifold m = fp2_collide(a, xa, b, xb);
     fail |= expect(m.hit == 1, "circle-circle should hit");
     fail |= expect(m.penetration > 0.0f, "circle-circle penetration > 0");
+    fail |= expect(m.cp_count == 1, "circle-circle should produce one contact point");
   }
 
   {
@@ -40,6 +41,7 @@ int test_collision(void) {
     FpTransform2 xb = { fp_v2(1.5f,0.2f), fp_m22_rot(-0.1f) };
     Fp2Manifold m = fp2_collide(a, xa, b, xb);
     fail |= expect(m.hit == 1, "box-box should hit");
+    fail |= expect(m.cp_count == 2, "box-box should produce a two-point manifold");
   }
 
   {

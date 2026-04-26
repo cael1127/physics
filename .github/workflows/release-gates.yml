@@ -1,0 +1,34 @@
+name: Release Gates
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release-gate:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Configure deterministic release build
+        run: cmake -S . -B build -A x64 -DFP_DETERMINISTIC=ON -DFP_SIMD=ON
+
+      - name: Build release
+        run: cmake --build build --config Release
+
+      - name: Run full tests
+        run: ctest --test-dir build -C Release --output-on-failure
+
+      - name: Run determinism gate
+        run: ctest --test-dir build -C Release -R fullphysics_determinism --output-on-failure
+
+      - name: Run smoke benchmark gate
+        run: python bench/run_benchmark.py --profile profiles/smoke.json --out artifacts/release-gates
